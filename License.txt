@@ -1,10 +1,10 @@
 GoogleScriptBridge - רישיון שימוש אישי בלבד
 
-כל הזכויות שמורות לצדיק וטוב לו.
+כל הזכויות שמורות ללומדע'ס & צדיק וטוב לו.
 
 מותר אך ורק שימוש לצורך שימוש אישי (Personal Use).
 
-חל איסור על כל אחד מהדברים הבאים - ללא רשות מפורשת בכתב מהיוצר:
+חל איסור על כל אחד מהדברים הבאים - ללא רשות מפורשת בכתב מהיוצרים:
 
 שימוש מסחרי מכל סוג שהוא בקוד או בחלקים ממנו.
 
@@ -16,9 +16,9 @@ GoogleScriptBridge - רישיון שימוש אישי בלבד
 
 ***
 
-PushBox - Personal Use Only License
+GoogleScriptBridge - Personal Use Only License
 
-All rights reserved to Tzadikvtovlo.
+All rights reserved to לומדעס & Tzadikvtovlo.
 
 Use for personal use only is permitted.
 
