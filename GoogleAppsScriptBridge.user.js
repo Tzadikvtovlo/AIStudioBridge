@@ -2,7 +2,7 @@
 // @name         GoogleAppsScript
 // @namespace    http://tampermonkey.net/
 // @version      2.0
-// @description  מוסיף כםתורי הורדת והעלאת קבצי הקוד (GS) של גוגל סקריפט
+// @description  מוסיף כפתורי הורדה והעלאה של קבצי קוד (GS) של גוגל סקריפט
 // @author       צדיק וטוב לו & לומדעס
 // @match        https://script.google.com/*
 // @icon         https://www.gstatic.com/script/apps_script_1x_48dp.png
