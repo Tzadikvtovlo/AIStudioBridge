@@ -1,1 +1,1 @@
-# AIStudioBridge
+# GoogleScriptBridge
