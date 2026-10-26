@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GoogleAppsScript
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  מוסיף כפתורי הורדה והעלאה של קבצי קוד (GS) של גוגל סקריפט
 // @author       צדיק וטוב לו & לומדעס
 // @match        https://script.google.com/*
@@ -9,14 +9,13 @@
 // @updateURL    https://raw.githubusercontent.com/Tzadikvtovlo/GoogleScriptBridge/main/GoogleAppsScriptBridge.user.js
 // @downloadURL  https://raw.githubusercontent.com/Tzadikvtovlo/GoogleScriptBridge/main/GoogleAppsScriptBridge.user.js
 // @grant        none
+
 // ==/UserScript==
 
 (function() {
     'use strict';
 
     if (window.innerWidth < 10 || window.innerHeight < 10) return;
-
-    console.log("🚀 [GAS Ultimate Suite] גרסה 16.0 - ממשק פרימיום להעלאה והורדה, תמיכה בסייר הקבצים!");
 
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     const clean = s => String(s || '').replace(/[\u200e\u200f]/g, '').trim();
@@ -69,7 +68,6 @@
         ]
     };
 
-    // --- בניית ממשק הסרגל (Sidebar) ---
     function createSidebarButton(text, iconPaths, onClickCallback) {
         const btn = document.createElement('div');
         btn.setAttribute('role', 'button');
@@ -106,7 +104,6 @@
         return btn;
     }
 
-    // בדיקה מדויקת האם הדף הנוכחי הוא עמוד עריכה פעיל
     function isEditPage() {
         try {
             const cleanUrl = window.location.href.split(/[?#]/)[0].replace(/\/+$/, '');
@@ -116,7 +113,6 @@
         }
     }
 
-    // איתור ספציפי של כפתור הגדרות הפרויקט בסרגל הצד (בלבד!)
     function getSidebarSettingsButton() {
         const projectSettingsSelectors = [
             '[aria-label*="Project Settings" i]',
@@ -130,21 +126,19 @@
         for (const sel of projectSettingsSelectors) {
             const list = document.querySelectorAll(sel);
             for (const el of list) {
-                const rect = el.getBoundingClientRect();
-                if (rect.width > 0 && rect.height > 0) {
+                if (el.offsetWidth > 0 || el.offsetHeight > 0) {
                     return el;
                 }
             }
         }
 
-        // גיבוי: איתור דרך כפתור העורך (Editor) בסרגל הצד הראשי
         const editorBtn = document.querySelector('[aria-label*="Editor" i], [aria-label*="עורך"]');
         if (editorBtn && editorBtn.parentElement) {
             const nav = editorBtn.parentElement;
             const children = Array.from(nav.children).filter(c => c.id !== 'gas-custom-tools-wrapper');
             if (children.length > 0) {
                 const last = children[children.length - 1];
-                if (last && last.getBoundingClientRect().width > 0) {
+                if (last && (last.offsetWidth > 0 || last.offsetHeight > 0)) {
                     return last;
                 }
             }
@@ -153,30 +147,37 @@
         return null;
     }
 
+    function isSettingsButton(el) {
+        if (!el) return false;
+        const aria = (el.getAttribute('aria-label') || '').toLowerCase();
+        return aria.includes('settings') || aria.includes('הגדרות');
+    }
+
     function createUI() {
         try {
             if (!document.body) return;
 
-            // אם אנחנו לא בעמוד עריכה שנגמר ב-/edit (למשל דף בית, הגדרות וכו') – מסירים את הכפתורים מיד
+            const existing = document.getElementById('gas-custom-tools-wrapper');
+
+            // אם לא בעמוד עריכה – מסירים מיידית
             if (!isEditPage()) {
-                const existing = document.getElementById('gas-custom-tools-wrapper');
                 if (existing) existing.remove();
                 return;
             }
 
-            const settingsBtn = getSidebarSettingsButton();
-            const existing = document.getElementById('gas-custom-tools-wrapper');
-
-            // אם הכפתורים כבר קיימים ובמיקומם המדויק בסרגל
-            if (existing) {
-                if (settingsBtn && settingsBtn.nextElementSibling === existing) {
-                    return;
+            // בדיקת קרבה מהירה כברק (0.001ms): האם הכפתור קיים ויושב בדיוק אחרי כפתור ההגדרות?
+            if (existing && existing.isConnected) {
+                const prev = existing.previousElementSibling;
+                if (prev && isSettingsButton(prev) && (prev.offsetWidth > 0 || prev.offsetHeight > 0)) {
+                    return; // הכפתור במקום הנכון והסרגל תקין – אין צורך לעשות כלום!
                 }
-                existing.remove();
             }
 
-            // ממתינים עד שסרגל עמוד העריכה נטען במלואו
+            // אם הכפתור זז, נותק או נמחק על ידי סרגל הצד – מאתרים מחדש
+            const settingsBtn = getSidebarSettingsButton();
             if (!settingsBtn) return;
+
+            if (existing) existing.remove();
 
             const toolsWrapper = document.createElement('div');
             toolsWrapper.id = 'gas-custom-tools-wrapper';
@@ -191,7 +192,6 @@
         }
     }
 
-    // --- מסגרת Overlay גלובלית ואלגנטית ---
     function createOverlay() {
         const overlay = document.createElement('div');
         overlay.style.cssText = `
@@ -250,7 +250,6 @@
 
         viewDrag.append(upIcon, title1, sub1);
 
-        // Input נסתר לבחירת קבצים דרך סייר
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.multiple = true;
@@ -262,7 +261,6 @@
 
         viewDrag.onclick = () => fileInput.click();
 
-        // חלון אישור ורשימה
         const viewConfirm = document.createElement('div');
         viewConfirm.style.cssText = 'display: none; flex-direction: column; align-items: center; padding: 30px 40px;';
 
@@ -292,7 +290,6 @@
 
         uploadOverlay.addEventListener('click', (e) => { if(e.target === uploadOverlay) uploadOverlay.remove(); });
 
-        // גרירה
         viewDrag.addEventListener('dragover', (e) => { e.preventDefault(); viewDrag.style.borderColor = '#1a73e8'; viewDrag.style.background = '#e8f0fe'; });
         viewDrag.addEventListener('dragleave', (e) => { e.preventDefault(); viewDrag.style.borderColor = '#a8c7fa'; viewDrag.style.background = '#fcfcfc'; });
         viewDrag.addEventListener('drop', (e) => {
@@ -353,7 +350,6 @@
         };
     }
 
-    // --- לוגיקת ההזרקה נשמרת מגרסה 15.4 ללא שינוי ---
     async function processFile(file) {
         const content = await file.text();
         const name = file.name.replace(/\.[^/.]+$/, "");
@@ -365,7 +361,7 @@
             let addBtn = null;
             for (let i = 0; i < 8; i++) {
                 const addBtns = Array.from(document.querySelectorAll('[aria-label="Add a file"], [aria-label="הוספת קובץ"]'));
-                addBtn = addBtns.find(btn => btn.getBoundingClientRect().width > 0);
+                addBtn = addBtns.find(btn => btn.offsetWidth > 0 || btn.offsetHeight > 0);
                 if (addBtn) break; await sleep(500);
             }
             if (!addBtn) return;
@@ -378,8 +374,7 @@
                 await sleep(500);
                 const menuItems = Array.from(document.querySelectorAll('[role="menuitem"]'));
                 scriptItem = menuItems.find(el => {
-                    const rect = el.getBoundingClientRect();
-                    if (rect.width > 0 && rect.height > 0) {
+                    if (el.offsetWidth > 0 || el.offsetHeight > 0) {
                         const txt = (el.innerText || el.textContent || '').trim();
                         return txt === 'Script' || txt === 'סקריפט' || txt.includes('Script') || txt.includes('סקריפט');
                     }
@@ -432,7 +427,7 @@
     // =========================================================================
     let dlOverlay, dlFileList = [], isDownloading = false;
 
-    const visible = el => { if (!el) return false; const r = el.getBoundingClientRect(), s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden'; };
+    const visible = el => { if (!el) return false; return (el.offsetWidth > 0 || el.offsetHeight > 0); };
     const extractName = el => { const raw = clean(el.getAttribute('aria-label') || el.getAttribute('title') || el.innerText || el.textContent); const matches = [...raw.matchAll(/([^\n]+?\.(?:gs|html|json))(?=\n|$)/ig)]; return matches.length === 1 ? safe(matches[0][1]) : ''; };
 
     const discoverFiles = (overlay) => {
@@ -444,7 +439,7 @@
             if (!visible(el)) continue;
             const name = extractName(el);
             if (!name) continue;
-            const r = el.getBoundingClientRect(), score = r.width * r.height;
+            const score = el.offsetWidth * el.offsetHeight;
             const old = result.get(name);
             if (!old || score < old.score) result.set(name, { el, score });
         }
@@ -643,7 +638,7 @@
         };
     }
 
-    // --- מעקב רציף ומיידי אחרי שינויי ניווט וכתובת ב-SPA ---
+    // --- מעקב רציף ומיידי אחרי שינויי ניווט וקליקים ב-SPA ---
     window.addEventListener('popstate', () => setTimeout(createUI, 50));
 
     const origPushState = history.pushState;
@@ -658,7 +653,13 @@
         setTimeout(createUI, 50);
     };
 
-    // בדיקה מחזורית קבועה (כל 250 מ"ש) להבטחת הזרקה או הסרה מיידית
-    setInterval(createUI, 250);
+    // תגובה מיידית לקליקים על סרגל הצד / כפתור ההמבורגר (0 דיליי)
+    document.addEventListener('click', () => {
+        setTimeout(createUI, 50);
+        setTimeout(createUI, 300); // בסיום אנימציית פתיחה/סגירה
+    }, { passive: true });
+
+    // בדיקה מחזורית קלילה כל 400 מ"ש (הבדיקה לוקחת 0.001ms כשהאלמנט במקום)
+    setInterval(createUI, 400);
 
 })();
