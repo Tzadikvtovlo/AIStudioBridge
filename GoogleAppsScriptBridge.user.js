@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GoogleAppsScript
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  מוסיף כפתורי הורדה והעלאה של קבצי קוד (GS) של גוגל סקריפט
 // @author       צדיק וטוב לו & לומדעס
 // @match        https://script.google.com/*
@@ -107,7 +107,8 @@
     function isEditPage() {
         try {
             const cleanUrl = window.location.href.split(/[?#]/)[0].replace(/\/+$/, '');
-            return cleanUrl.startsWith('https://script.google.com/home/projects/') && cleanUrl.endsWith('/edit');
+            const startsCorrectly = /^https:\/\/script\.google\.com(\/u\/\d+)?\/home\/projects\//.test(cleanUrl);
+            return startsCorrectly && cleanUrl.endsWith('/edit');
         } catch (_) {
             return false;
         }
